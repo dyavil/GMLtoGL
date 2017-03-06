@@ -7,8 +7,8 @@
 
 class objectToMesh{
 public:
-	objectToMesh();
-	~objectToMesh();
+	objectToMesh(){};
+	~objectToMesh(){};
 	Mesh toMesh(const citygml::ConstCityObjects & obj);
 
 };
