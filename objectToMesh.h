@@ -6,6 +6,9 @@
 #include <citygml/polygon.h>
 #include <citygml/linearring.h>
 #include "mesh.h"
+#include "math.h"
+#include <iostream>
+#include <fstream>
 
 class objectToMesh{
 public:
@@ -15,4 +18,5 @@ public:
 	void recursiveCall(Mesh &mesh, const citygml::CityObject * obj);
 	void recursiveGeometryCall(Mesh & mesh, citygml::Geometry gs);
 
+	std::ofstream logfile;
 };

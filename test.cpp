@@ -17,35 +17,85 @@
 
 // creation des objets openGL
 Mesh mesh;
+Mesh mesh2;
 Orbiter camera;
 
 int init( )
 {
     objectToMesh obm;
+    ///home/dyavil/Documents/Master/TER/Part-2-Tunnel-Bridge-V3.gml
+    ///home/dyavil/Documents/TER/LYON_1ER_2012/LYON_1ER_OBJET_REMARQUABLE_2012.gml
+    ///home/dyavil/Downloads/CityGML_2.0_Test_Dataset_2012-04-23/Part-3-Railway-V2.gml
+    ///home/dyavil/Downloads/citygml/examples/2.0/building/Building_LOD4-EPSG25832.gml
 	citygml::ParserParams params;
-	std::shared_ptr<const citygml::CityModel> city = citygml::load("/home/dyavil/Documents/Master/TER/Part-2-Tunnel-Bridge-V3.gml", params );
+	std::shared_ptr<const citygml::CityModel> city = citygml::load("/home/dyavil/Documents/TER/LYON_1ER_2012/LYON_1ER_BATI_2012.gml", params );
 	const citygml::ConstCityObjects obj =  city->getRootCityObjects();
 
 	mesh = obm.toMesh(obj);
-	std::cout << "yolo" << std::endl;
+    mesh2.color(Color(1, 0, 1));
+
+	
    
+    
+
+    mesh2 = Mesh(GL_TRIANGLES);
+    Point center((142320+142340+142500)/3, (-24356-24250-24240)/3, 0);
+    unsigned int a = mesh2.vertex(142320, -24356, 0);
+    unsigned int b = mesh2.vertex(142340, -24250, 0);
+    unsigned int c = mesh2.vertex(142500, -24240, 0);
+    //unsigned int d = mesh2.vertex(-0.5, 0, 0);
+
+    /*unsigned int e = mesh2.vertex(-0.5, -0.5, -0.5);
+    unsigned int f = mesh2.vertex(0, -0.5, -0.5);
+    unsigned int g = mesh2.vertex(0, 0, -0.5);
+    unsigned int h = mesh2.vertex(-0.5, 0, -0.5);*/
+
+    
+    mesh2.triangle(a, c, b);
+    mesh2.triangle(a, b, c);
+    mesh2.triangle(c, a, b);
+    /*mesh2.triangle(e, h, g);
+
+    mesh2.triangle(e, a, d);
+    mesh2.triangle(e, d, h);
+
+    mesh2.triangle(b, f, g);
+    mesh2.triangle(b, g, c);
+
+    mesh2.triangle(a, b, c);
+    mesh2.triangle(a, c, d);*/
+
     Point pmin, pmax;
     mesh.bounds(pmin, pmax);
+    Point newcenter((pmin.x+pmax.x)/2, (pmin.y+pmax.y)/2, (pmin.z+pmax.z)/2);
+    for (int i = 0; i < mesh.vertex_count(); ++i)
+    {
+        vec3 t = mesh.positions()[i];
+        mesh.vertex(i, t.x-newcenter.x, t.y-newcenter.y, t.z-newcenter.z);
+    }
+    std::cout << pmin.x << ", " << pmax.x << std::endl;
+    std::cout << pmin.y << ", " << pmax.y << std::endl;
+    mesh.bounds(pmin, pmax);
+    std::cout << pmin.x << ", " << pmax.x << std::endl;
+    std::cout << pmin.y << ", " << pmax.y << std::endl;
     //camera.lookat(Point(-13.f, -5.f, -9.f), Point(13.f, 5.f, 9.f));
+    //camera.lookat(Point(-201535.f, -201542.f, -201542.f), Point(201542.f, 201542.f, 201542.f));
     camera.lookat(pmin, pmax);
 
-    glClearDepth(1.f);
-    glDepthFunc(GL_LESS);
-    glEnable(GL_DEPTH_TEST);
+    //glClearDepth(1.f);
+    //glDepthFunc(GL_LESS);
+    //glClearColor(1, 0, 1, 0.5);
+    //glEnable(GL_DEPTH_TEST);
     return 0;   // renvoyer 0 ras, pas d'erreur, sinon renvoyer -1
 }
 
 // affichage
 int draw( )
 {
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    glClear(GL_COLOR_BUFFER_BIT);
     //draw(mesh, Identity(), Identity(), Identity());
     draw(mesh, camera);
+    //draw(mesh2, Identity(), Identity(), Identity());
 
     int mx, my;
     unsigned int mb= SDL_GetRelativeMouseState(&mx, &my);
