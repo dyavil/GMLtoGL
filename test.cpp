@@ -19,6 +19,7 @@
 Mesh mesh;
 Mesh mesh2;
 Orbiter camera;
+GLuint texture;
 
 int init( )
 {
@@ -29,9 +30,20 @@ int init( )
     ///home/dyavil/Downloads/citygml/examples/2.0/building/Building_LOD4-EPSG25832.gml
 	citygml::ParserParams params;
 	std::shared_ptr<const citygml::CityModel> city = citygml::load("/home/dyavil/Documents/TER/LYON_1ER_2012/LYON_1ER_BATI_2012.gml", params );
-	const citygml::ConstCityObjects obj =  city->getRootCityObjects();
+	std::cout << "load" << std::endl;
+    std::vector<std::string> thl= city->themes();
+    std::string theme = "";
 
-	mesh = obm.toMesh(obj);
+    for (int i = 0; i < thl.size(); ++i)
+    {
+        theme = thl[i];
+        std::cout << "in" << std::endl;
+    }
+
+    const citygml::ConstCityObjects obj =  city->getRootCityObjects();
+    
+    std::cout << "object" << std::endl;
+	mesh = obm.toMesh(obj, theme);
     mesh2.color(Color(1, 0, 1));
 
 	
@@ -67,34 +79,28 @@ int init( )
 
     Point pmin, pmax;
     mesh.bounds(pmin, pmax);
-    Point newcenter((pmin.x+pmax.x)/2, (pmin.y+pmax.y)/2, (pmin.z+pmax.z)/2);
-    for (int i = 0; i < mesh.vertex_count(); ++i)
-    {
-        vec3 t = mesh.positions()[i];
-        mesh.vertex(i, t.x-newcenter.x, t.y-newcenter.y, t.z-newcenter.z);
-    }
-    std::cout << pmin.x << ", " << pmax.x << std::endl;
-    std::cout << pmin.y << ", " << pmax.y << std::endl;
-    mesh.bounds(pmin, pmax);
     std::cout << pmin.x << ", " << pmax.x << std::endl;
     std::cout << pmin.y << ", " << pmax.y << std::endl;
     //camera.lookat(Point(-13.f, -5.f, -9.f), Point(13.f, 5.f, 9.f));
     //camera.lookat(Point(-201535.f, -201542.f, -201542.f), Point(201542.f, 201542.f, 201542.f));
     camera.lookat(pmin, pmax);
+    std::string s = "/home/dyavil/Documents/TER/LYON_1ER_2012//LYON_1ER_BATI_Appearance/LYON_1ER_00001_Wall.jpg";
+    texture= read_texture(0, s.c_str());
 
     //glClearDepth(1.f);
-    //glDepthFunc(GL_LESS);
     //glClearColor(1, 0, 1, 0.5);
-    //glEnable(GL_DEPTH_TEST);
+    glClearDepth(1.f);
+    glDepthFunc(GL_LESS);
+    glEnable(GL_DEPTH_TEST);
     return 0;   // renvoyer 0 ras, pas d'erreur, sinon renvoyer -1
 }
 
 // affichage
 int draw( )
 {
-    glClear(GL_COLOR_BUFFER_BIT);
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     //draw(mesh, Identity(), Identity(), Identity());
-    draw(mesh, camera);
+    //draw(mesh, camera);
     //draw(mesh2, Identity(), Identity(), Identity());
 
     int mx, my;
@@ -106,8 +112,14 @@ int draw( )
         camera.rotation(mx, my);
     else if(mb & SDL_BUTTON(3))         // le bouton droit est enfonce
            // approche / eloigne l'objet
-           camera.move(mx);
+        camera.move(mx);
+    else if(mb & SDL_BUTTON(2))         // le bouton du milieu est enfonce
+            // deplace le point de rotation
+        camera.translation((float) mx / (float) window_width(), (float) my / (float) window_height());
 
+    /*DrawParam param;
+    param.camera(camera).texture(texture);
+    param.draw(mesh);*/
     draw(mesh, camera);
     /*static float angle= 0;      // il faudrait declarer angle comme variable globale...
         if(key_state('j'))
@@ -117,7 +129,6 @@ int draw( )
         
         Transform T= RotationY( angle );
         draw(mesh2, T, Identity(), Identity());*/
-
     return 1;   // on continue, renvoyer 0 pour sortir de l'application
 }
 

@@ -1,15 +1,26 @@
 #include "objectToMesh.h"
 
-Mesh objectToMesh::toMesh(const citygml::ConstCityObjects & obj){
+Mesh objectToMesh::toMesh(const citygml::ConstCityObjects & obj, std::string them){
 	Mesh mesh;
 	mesh = Mesh(GL_TRIANGLES);
+	//mesh.color(Color(0.62, 0.60, 0.91));
 	//mesh.color(Color(1, 0, 1));
+	theme = them;
   	logfile.open ("GMLtoGL/log.txt");
+  	
 	for (unsigned int i = 0; i < obj.size(); ++i)
 	{
 		recursiveCall(mesh, obj[i]);
 	}
 	logfile.close();
+	Point pmin, pmax;
+    mesh.bounds(pmin, pmax);
+    Point newcenter((pmin.x+pmax.x)/2, (pmin.y+pmax.y)/2, (pmin.z+pmax.z)/2);
+    for (int i = 0; i < mesh.vertex_count(); ++i)
+    {
+        vec3 t = mesh.positions()[i];
+        mesh.vertex(i, t.x-newcenter.x, t.y-newcenter.y, t.z-newcenter.z);
+    }
 	return mesh;
 }
 
@@ -55,6 +66,7 @@ void objectToMesh::recursiveGeometryCall(Mesh & mesh, citygml::Geometry gs)
 		recursiveGeometryCall(mesh, gsc);
 	}
 	logfile << "Geometry " << count << " est composée de " << gs.getPolygonsCount() << " polygon.\n";
+	std::string s = "";
 	for (unsigned int j = 0; j < gs.getPolygonsCount(); ++j)
 		{
 			std::shared_ptr<citygml::Polygon> pl = gs.getPolygon(j);
@@ -68,6 +80,7 @@ void objectToMesh::recursiveGeometryCall(Mesh & mesh, citygml::Geometry gs)
 
 
 			std::vector<TVec3d> tvec1 = pl->getVertices();
+			std::vector<TVec2f> textvec = pl->getTexCoordsForTheme(theme, true);
 			logfile << "Le polygon " << j << " de la geometry " << count << " est composé de " << tvec1.size() << " points.\n";
 			int nbpoly = 0;
 			float max = 0;
@@ -76,13 +89,19 @@ void objectToMesh::recursiveGeometryCall(Mesh & mesh, citygml::Geometry gs)
 			float ymin = 6000000;
 			float zmax = 0;
 			float zmin = 2000000;
+			
+			//std::cout << tvec1.size() << "  " << textvec.size() << std::endl;
 			for (unsigned int k = 0; k < tvec1.size(); ++k)
 			{
 				TVec3d vec1 = tvec1[k];
 				float a, b, c;
 				if (k < tvec1.size())
 				{
-					a = mesh.vertex(vec1[0]-1700000, vec1[1]-5200000, vec1[2]);
+					if(textvec.size() > k)mesh.texcoord(textvec[k].x, textvec[k].y);
+					
+					a = mesh.vertex(vec1.x-1700000, vec1.y-5200000, vec1.z);
+					TVec3d vecnorm = vec1.normal();
+					mesh.normal(vecnorm.x, vecnorm.y, vecnorm.z);
 					if (vec1[0] > max) max = vec1[0];
 					if (vec1[0] < min) min = vec1[0];
 					if (vec1[1] > ymax) ymax = vec1[1];
@@ -94,7 +113,10 @@ void objectToMesh::recursiveGeometryCall(Mesh & mesh, citygml::Geometry gs)
 				}
 				if (k+1 < tvec1.size())
 				{
-					b = mesh.vertex(vec1[0]-1700000, vec1[1]-5200000, vec1[2]);
+					if(textvec.size() > k+1) mesh.texcoord(textvec[k+1].x, textvec[k+1].y);
+					b = mesh.vertex(vec1.x-1700000, vec1.y-5200000, vec1.z);
+					TVec3d vecnorm = vec1.normal();
+					mesh.normal(vecnorm.x, vecnorm.y, vecnorm.z);	
 					if (vec1[0] > max) max = vec1[0];
 					if (vec1[0] < min) min = vec1[0];
 					if (vec1[1] > ymax) ymax = vec1[1];
@@ -106,22 +128,35 @@ void objectToMesh::recursiveGeometryCall(Mesh & mesh, citygml::Geometry gs)
 				}
 				if (k+2 < tvec1.size())
 				{
-					c = mesh.vertex(vec1[0]-1700000, vec1[1]-5200000, vec1[2]);
+					if(textvec.size() > k+2)mesh.texcoord(textvec[k+2].x, textvec[k+2].y);
+					c = mesh.vertex(vec1.x-1700000, vec1.y-5200000, vec1.z);
+					TVec3d vecnorm = vec1.normal();
+					mesh.normal(vecnorm.x, vecnorm.y, vecnorm.z);
 					if (vec1[0] > max) max = vec1[0];
 					if (vec1[0] < min) min = vec1[0];
 					if (vec1[1] > ymax) ymax = vec1[1];
 					if (vec1[1] < ymin) ymin = vec1[1];
 					if (vec1[2] > zmax) zmax = vec1[2];
 					if (vec1[2] < zmin) zmin = vec1[2];
-					mesh.triangle(a, b, c);
 
+					
+					//mesh.triangle(b, c, a);
+					mesh.triangle(a, b, c);
 					nbpoly++;
 					//logfile << "Triangle : " << a << "  " << "  " << b << "   " << c << "\n";
 				}
-			    k++;
+			    //k++;
 			    
 			   
 			}
+			/*std::shared_ptr<const citygml::Texture>  mat = pl->getTextureFor(theme);
+			std::string temp = "/home/dyavil/Documents/TER/LYON_1ER_2012/" + mat->getUrl();
+			if (mat != nullptr && temp != s)
+			{
+				s = "/home/dyavil/Documents/TER/LYON_1ER_2012/" + mat->getUrl();
+				//std::cout << s << std::endl;
+				//GLuint texture= read_texture(0, s.c_str());
+			}*/
 			logfile << "xdiff : " << max-min << ", ydiff : " << ymax-ymin << ", zdiff : " << zmax-zmin << "\n";
 			//std::cout << nbpoly << std::endl;
 		    /*TVec3d vec1 = tvec1[0];

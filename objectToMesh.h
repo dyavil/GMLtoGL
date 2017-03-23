@@ -3,8 +3,10 @@
 #include <citygml/cityobject.h>
 #include <citygml/geometry.h>
 #include <citygml/implictgeometry.h>
-#include <citygml/polygon.h>
 #include <citygml/linearring.h>
+#include <citygml/polygon.h>
+#include <citygml/texture.h>
+#include "texture.h"
 #include "mesh.h"
 #include "math.h"
 #include <iostream>
@@ -14,9 +16,10 @@ class objectToMesh{
 public:
 	objectToMesh(){};
 	~objectToMesh(){};
-	Mesh toMesh(const citygml::ConstCityObjects & obj);
+	Mesh toMesh(const citygml::ConstCityObjects & obj, std::string theme);
 	void recursiveCall(Mesh &mesh, const citygml::CityObject * obj);
 	void recursiveGeometryCall(Mesh & mesh, citygml::Geometry gs);
 
 	std::ofstream logfile;
+	std::string theme;
 };
