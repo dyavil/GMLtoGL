@@ -20,6 +20,7 @@ Mesh mesh;
 Mesh mesh2;
 Mesh mesh3;
 Mesh plane;
+std::vector<Mesh> geometries;
 Orbiter camera;
 GLuint texture;
 
@@ -42,10 +43,15 @@ int init( )
     }
 
     const citygml::ConstCityObjects obj =  city->getRootCityObjects();
-	mesh = obm.toMesh(obj, theme);
+    obm.toMesh(obj, theme);
+    
+    obm.meshTo2D();
+    mesh = obm.getMesh();
     Point pmin, pmax;
     mesh.bounds(pmin, pmax);
     obm.center(mesh, pmin, pmax);
+    geometries = obm.getGeometriesMeshes();
+    std::cout << geometries.size() <<std::endl;
 
     /*std::shared_ptr<const citygml::CityModel> city2 = citygml::load("/home/dyavil/Documents/TER/LYON_1ER_2012/LYON_1ER_WATER_2012.gml", params );
     
@@ -117,6 +123,10 @@ int draw( )
 
 
     draw(mesh, camera);
+    for (int i = 0; i < geometries.size(); ++i)
+    {
+        draw(geometries[i], camera);
+    }
     //draw(mesh2, camera);
     //draw(mesh3, camera);
     /*static float angle= 0;      // il faudrait declarer angle comme variable globale...
@@ -134,12 +144,17 @@ int draw( )
 int quit( )
 {
     mesh.release();
+    for (int i = 0; i < geometries.size(); ++i)
+    {
+        geometries[i].release();
+    }
     return 0;   // ras, pas d'erreur
 }
 
 
 int main( int argc, char **argv )
 {
+    srand(time(NULL));
     // etape 1 : creer la fenetre
     Window window= create_window(1024, 640);
     if(window == NULL)

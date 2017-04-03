@@ -1,16 +1,17 @@
 #include "objectToMesh.h"
 
-Mesh objectToMesh::toMesh(const citygml::ConstCityObjects & obj, std::string them){
-	Mesh mesh;
+Mesh & objectToMesh::toMesh(const citygml::ConstCityObjects & obj, std::string them){
 	mesh = Mesh(GL_TRIANGLES);
 	//mesh.color(Color(0.62, 0.60, 0.91));
 	//mesh.color(Color(1, 0, 1));
 	theme = them;
   	logfile.open ("GMLtoGL/log.txt");
-  	
+  	float r = ((float) rand() / (RAND_MAX));
+	float r1 = ((float) rand() / (RAND_MAX));
+	float r2 = ((float) rand() / (RAND_MAX));
 	for (unsigned int i = 0; i < obj.size(); ++i)
 	{
-		recursiveCall(mesh, obj[i]);
+		recursiveCall(mesh, obj[i], r, r1, r2, 0);
 	}
 	logfile.close();
 	
@@ -32,26 +33,42 @@ void objectToMesh::center(Mesh & mesh, Point pmax, Point pmin){
         vec3 t = mesh.positions()[i];
         mesh.vertex(i, t.x-newcenter.x, t.y-newcenter.y, t.z-newcenter.z);
     }
+    for (int i = 0; i < geometries.size(); ++i)
+    {
+    	for (int j = 0; j < geometries[i].vertex_count(); ++j)
+	    {
+	        vec3 t = geometries[i].positions()[j];
+	        geometries[i].vertex(j, t.x-newcenter.x, t.y-newcenter.y, t.z-newcenter.z);
+	    }
+    }
 }
 
 
-void objectToMesh::recursiveCall(Mesh & mesh, const citygml::CityObject * obj)
+void objectToMesh::recursiveCall(Mesh & mesh, const citygml::CityObject * obj, float r, float r1, float r2, int deep)
 {
 	static int numb = 0;
 	static int count = 0;
 	count++;
 	logfile << "Objet " << count << " a " << obj->getChildCityObjectsCount() << " enfants.\n";
+	if (deep == 0)
+	{
+		r = ((float) rand() / (RAND_MAX));
+		r1 = ((float) rand() / (RAND_MAX));
+		r2 = ((float) rand() / (RAND_MAX));
+	}
 	for (unsigned int i = 0; i < obj->getChildCityObjectsCount(); ++i)
 	{
 		const citygml::CityObject *objc = &obj->getChildCityObject(i);
-		recursiveCall(mesh, objc);
+		recursiveCall(mesh, objc, r, r1, r2, deep+1);
 	}
 	numb += obj->getChildCityObjectsCount();
 	logfile << "Objet " << count << " est composé de " << obj->getGeometriesCount() << " geometries.\n";
+	
 	for (unsigned int i = 0; i < obj->getGeometriesCount(); ++i)
 	{
+		
 		citygml::Geometry gs = obj->getGeometry(i);
-		recursiveGeometryCall(mesh, gs);
+		recursiveGeometryCall(mesh, gs, r, r1, r2);
 	}
 	for (unsigned int i = 0; i < obj->getImplicitGeometryCount(); ++i)
 	{
@@ -64,20 +81,26 @@ void objectToMesh::recursiveCall(Mesh & mesh, const citygml::CityObject * obj)
 }
 
 
-void objectToMesh::recursiveGeometryCall(Mesh & mesh, citygml::Geometry gs)
+void objectToMesh::recursiveGeometryCall(Mesh & mesh, citygml::Geometry gs, float r, float r1, float r2)
 {
 	static int count = 0;
 	count++;
 	logfile << "Geometry " << count << " est composée de " << gs.getGeometriesCount() << " gémotries enfant.\n";
+	
+
+
 	for (unsigned int i = 0; i < gs.getGeometriesCount(); ++i)
 	{
+
 		citygml::Geometry gsc = gs.getGeometry(i);
-		recursiveGeometryCall(mesh, gsc);
+		recursiveGeometryCall(mesh, gsc, r, r1, r2);
 	}
 	logfile << "Geometry " << count << " est composée de " << gs.getPolygonsCount() << " polygon.\n";
 	std::string s = "";
+	
 	Mesh temp;
 	temp = Mesh(GL_TRIANGLES);
+	temp.color(Color(r, r1, r2));
 	for (unsigned int j = 0; j < gs.getPolygonsCount(); ++j)
 		{
 			std::shared_ptr<citygml::Polygon> pl = gs.getPolygon(j);
@@ -173,6 +196,7 @@ void objectToMesh::recursiveGeometryCall(Mesh & mesh, citygml::Geometry gs)
 				//std::cout << s << std::endl;
 				//GLuint texture= read_texture(0, s.c_str());
 			}*/
+
 			logfile << "xdiff : " << max-min << ", ydiff : " << ymax-ymin << ", zdiff : " << zmax-zmin << "\n";
 			//std::cout << nbpoly << std::endl;
 		    /*TVec3d vec1 = tvec1[0];
@@ -184,6 +208,17 @@ void objectToMesh::recursiveGeometryCall(Mesh & mesh, citygml::Geometry gs)
 		    std::cout << tvec1.size() << "  " << tvec1[0][0] << "  " << tvec1[3][0] << std::endl;
 		    mesh.triangle(a, b, c);*/
 		}
+		if(gs.getGeometriesCount() == 0) geometries.push_back(temp);
+}
+
+
+void objectToMesh::meshTo2D(){
+	for (int i = 0; i < mesh.index_count(); ++i)
+	{
+		int pos = mesh.indices()[i];
+		vec3 temp = mesh.positions()[pos];	
+		mesh.vertex(mesh.indices()[i], temp.x, temp.y, 0);	
+	}
 }
 
 
