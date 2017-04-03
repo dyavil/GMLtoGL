@@ -17,6 +17,7 @@ public:
 	objectToMesh(){};
 	~objectToMesh(){};
 	Mesh toMesh(const citygml::ConstCityObjects & obj, std::string theme);
+	void center(Mesh & mesh, Point pmin, Point pmax);
 	void recursiveCall(Mesh &mesh, const citygml::CityObject * obj);
 	void recursiveGeometryCall(Mesh & mesh, citygml::Geometry gs);
 

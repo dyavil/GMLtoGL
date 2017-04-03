@@ -13,17 +13,26 @@ Mesh objectToMesh::toMesh(const citygml::ConstCityObjects & obj, std::string the
 		recursiveCall(mesh, obj[i]);
 	}
 	logfile.close();
-	Point pmin, pmax;
+	
+	/*Point pmin, pmax;
     mesh.bounds(pmin, pmax);
     Point newcenter((pmin.x+pmax.x)/2, (pmin.y+pmax.y)/2, (pmin.z+pmax.z)/2);
     for (int i = 0; i < mesh.vertex_count(); ++i)
     {
         vec3 t = mesh.positions()[i];
         mesh.vertex(i, t.x-newcenter.x, t.y-newcenter.y, t.z-newcenter.z);
-    }
+    }*/
 	return mesh;
 }
 
+void objectToMesh::center(Mesh & mesh, Point pmax, Point pmin){
+    Point newcenter((pmin.x+pmax.x)/2, (pmin.y+pmax.y)/2, (pmin.z+pmax.z)/2);
+    for (int i = 0; i < mesh.vertex_count(); ++i)
+    {
+        vec3 t = mesh.positions()[i];
+        mesh.vertex(i, t.x-newcenter.x, t.y-newcenter.y, t.z-newcenter.z);
+    }
+}
 
 
 void objectToMesh::recursiveCall(Mesh & mesh, const citygml::CityObject * obj)
@@ -49,7 +58,7 @@ void objectToMesh::recursiveCall(Mesh & mesh, const citygml::CityObject * obj)
 		citygml::ImplicitGeometry igs = obj->getImplicitGeometry(i);
 		for (unsigned int j = 0; j < igs.getGeometriesCount(); ++j)
 		{
-			//std::cout << "geoimp" << std::endl;
+			std::cout << "geoimp" << std::endl;
 		}
 	}
 }
@@ -67,6 +76,8 @@ void objectToMesh::recursiveGeometryCall(Mesh & mesh, citygml::Geometry gs)
 	}
 	logfile << "Geometry " << count << " est composée de " << gs.getPolygonsCount() << " polygon.\n";
 	std::string s = "";
+	Mesh temp;
+	temp = Mesh(GL_TRIANGLES);
 	for (unsigned int j = 0; j < gs.getPolygonsCount(); ++j)
 		{
 			std::shared_ptr<citygml::Polygon> pl = gs.getPolygon(j);
@@ -95,11 +106,13 @@ void objectToMesh::recursiveGeometryCall(Mesh & mesh, citygml::Geometry gs)
 			{
 				TVec3d vec1 = tvec1[k];
 				float a, b, c;
+				float aa, bb, cc;
 				if (k < tvec1.size())
 				{
 					if(textvec.size() > k)mesh.texcoord(textvec[k].x, textvec[k].y);
 					
 					a = mesh.vertex(vec1.x-1700000, vec1.y-5200000, vec1.z);
+					aa = temp.vertex(vec1.x-1700000, vec1.y-5200000, vec1.z);
 					TVec3d vecnorm = vec1.normal();
 					mesh.normal(vecnorm.x, vecnorm.y, vecnorm.z);
 					if (vec1[0] > max) max = vec1[0];
@@ -115,6 +128,7 @@ void objectToMesh::recursiveGeometryCall(Mesh & mesh, citygml::Geometry gs)
 				{
 					if(textvec.size() > k+1) mesh.texcoord(textvec[k+1].x, textvec[k+1].y);
 					b = mesh.vertex(vec1.x-1700000, vec1.y-5200000, vec1.z);
+					bb = temp.vertex(vec1.x-1700000, vec1.y-5200000, vec1.z);
 					TVec3d vecnorm = vec1.normal();
 					mesh.normal(vecnorm.x, vecnorm.y, vecnorm.z);	
 					if (vec1[0] > max) max = vec1[0];
@@ -130,6 +144,7 @@ void objectToMesh::recursiveGeometryCall(Mesh & mesh, citygml::Geometry gs)
 				{
 					if(textvec.size() > k+2)mesh.texcoord(textvec[k+2].x, textvec[k+2].y);
 					c = mesh.vertex(vec1.x-1700000, vec1.y-5200000, vec1.z);
+					cc = temp.vertex(vec1.x-1700000, vec1.y-5200000, vec1.z);
 					TVec3d vecnorm = vec1.normal();
 					mesh.normal(vecnorm.x, vecnorm.y, vecnorm.z);
 					if (vec1[0] > max) max = vec1[0];
@@ -142,6 +157,7 @@ void objectToMesh::recursiveGeometryCall(Mesh & mesh, citygml::Geometry gs)
 					
 					//mesh.triangle(b, c, a);
 					mesh.triangle(a, b, c);
+					temp.triangle(aa, bb, cc);
 					nbpoly++;
 					//logfile << "Triangle : " << a << "  " << "  " << b << "   " << c << "\n";
 				}
