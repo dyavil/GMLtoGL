@@ -37,7 +37,7 @@ int init( )
     std::vector<std::string> thl= city->themes();
     std::string theme = "";
 
-    for (int i = 0; i < thl.size(); ++i)
+    for (unsigned int i = 0; i < thl.size(); ++i)
     {
         theme = thl[i];
     }
@@ -50,6 +50,7 @@ int init( )
     Point pmin, pmax;
     mesh.bounds(pmin, pmax);
     obm.center(mesh, pmin, pmax);
+    obm.colorMeshTo2D();
     geometries = obm.getGeometriesMeshes();
     std::cout << geometries.size() <<std::endl;
 
@@ -122,8 +123,8 @@ int draw( )
         camera.translation((float) mx / (float) window_width(), (float) my / (float) window_height());
 
 
-    draw(mesh, camera);
-    for (int i = 0; i < geometries.size(); ++i)
+    //draw(mesh, camera);
+    for (unsigned int i = 0; i < geometries.size(); ++i)
     {
         draw(geometries[i], camera);
     }
@@ -143,8 +144,8 @@ int draw( )
 // destruction des objets openGL
 int quit( )
 {
-    mesh.release();
-    for (int i = 0; i < geometries.size(); ++i)
+    //mesh.release();
+    for (unsigned int i = 0; i < geometries.size(); ++i)
     {
         geometries[i].release();
     }

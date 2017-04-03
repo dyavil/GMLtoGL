@@ -33,7 +33,7 @@ void objectToMesh::center(Mesh & mesh, Point pmax, Point pmin){
         vec3 t = mesh.positions()[i];
         mesh.vertex(i, t.x-newcenter.x, t.y-newcenter.y, t.z-newcenter.z);
     }
-    for (int i = 0; i < geometries.size(); ++i)
+    for (unsigned int i = 0; i < geometries.size(); ++i)
     {
     	for (int j = 0; j < geometries[i].vertex_count(); ++j)
 	    {
@@ -219,6 +219,19 @@ void objectToMesh::meshTo2D(){
 		vec3 temp = mesh.positions()[pos];	
 		mesh.vertex(mesh.indices()[i], temp.x, temp.y, 0);	
 	}
+}
+
+void objectToMesh::colorMeshTo2D(){
+	for (unsigned int j = 0; j < geometries.size(); ++j)
+	{
+		for (int i = 0; i < geometries[j].index_count(); ++i)
+		{
+			int pos = geometries[j].indices()[i];
+			vec3 temp = geometries[j].positions()[pos];	
+			geometries[j].vertex(geometries[j].indices()[i], temp.x, temp.y, 0);	
+		}
+	}
+	
 }
 
 

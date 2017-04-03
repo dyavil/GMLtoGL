@@ -21,6 +21,7 @@ public:
 	void recursiveCall(Mesh &mesh, const citygml::CityObject * obj, float r, float r1, float r2, int deep);
 	void recursiveGeometryCall(Mesh & mesh, citygml::Geometry gs, float r, float r1, float r2);
 	void meshTo2D();
+	void colorMeshTo2D();
 	Mesh & getMesh(){return mesh;};
 	std::vector<Mesh> & getGeometriesMeshes(){return geometries;};
 
