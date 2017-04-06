@@ -26,7 +26,7 @@ Mesh & objectToMesh::toMesh(const citygml::ConstCityObjects & obj, std::string t
 	return mesh;
 }
 
-void objectToMesh::center(Mesh & mesh, Point pmax, Point pmin){
+void objectToMesh::centerM(Mesh & mesh, Point pmax, Point pmin){
     Point newcenter((pmin.x+pmax.x)/2, (pmin.y+pmax.y)/2, (pmin.z+pmax.z)/2);
     for (int i = 0; i < mesh.vertex_count(); ++i)
     {
@@ -228,7 +228,7 @@ void objectToMesh::meshTo2D(){
 	{
 		int pos = mesh.indices()[i];
 		vec3 temp = mesh.positions()[pos];	
-		mesh.vertex(mesh.indices()[i], temp.x, temp.y, 0);	
+		mesh.vertex(mesh.indices()[i], temp.x, temp.y, 150.0);	
 	}
 }
 
@@ -239,7 +239,7 @@ void objectToMesh::colorMeshTo2D(){
 		{
 			int pos = geometries[j].indices()[i];
 			vec3 temp = geometries[j].positions()[pos];	
-			geometries[j].vertex(geometries[j].indices()[i], temp.x, temp.y, 0);	
+			geometries[j].vertex(geometries[j].indices()[i], temp.x, temp.y, 0.0);	
 		}
 	}
 	
@@ -249,20 +249,22 @@ void objectToMesh::colorMeshTo2D(){
 float objectToMesh::distanceM(Point & a, Mesh & b){
 	Point bpmin, bpmax;
 	b.bounds(bpmin, bpmax);
-	float d1 = distance(a, bpmin);
+	Point p = center(bpmin, bpmax);
+	/*float d1 = distance(a, bpmin);
 	float d2 = distance(a, bpmax);
-	float r1 = std::min(d1, d2);
-	return r1;
+	float r1 = std::min(d1, d2);*/
+	float r = distance(a, p);
+	return r;
 }
 
 void objectToMesh::computeShowned(Point p){
-	const int maxdist = 150;
+	const int maxdist = 180;
 	showned.clear();
 	for (int i = 0; i < geometries.size(); ++i)
 	{
 		if (distanceM(p, geometries[i]) < maxdist)
 		{
-			showned.push_back(geometries[i]);
+			showned.push_back(i);
 		}
 	}
 }

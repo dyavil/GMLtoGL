@@ -26,6 +26,8 @@ std::vector<Mesh> geometries;
 Orbiter camera;
 GLuint texture;
 objectToMesh obm;
+Transform t;
+std::ofstream logfile;
 
 
 
@@ -65,7 +67,7 @@ void init_sphere()
 
 int init( )
 {
-    
+    logfile.open ("GMLtoGL/log2.txt");
     ///home/dyavil/Documents/Master/TER/Part-2-Tunnel-Bridge-V3.gml
     ///home/dyavil/Documents/TER/LYON_1ER_2012/LYON_1ER_OBJET_REMARQUABLE_2012.gml
     ///home/dyavil/Downloads/CityGML_2.0_Test_Dataset_2012-04-23/Part-3-Railway-V2.gml
@@ -83,7 +85,6 @@ int init( )
     init_sphere();
     
 
-
     const citygml::ConstCityObjects obj =  city->getRootCityObjects();
     obm.toMesh(obj, theme);
     
@@ -91,9 +92,9 @@ int init( )
     mesh = obm.getMesh();
     Point pmin, pmax;
     mesh.bounds(pmin, pmax);
-    obm.center(mesh, pmin, pmax);
+    obm.centerM(mesh, pmin, pmax);
     
-    obm.colorMeshTo2D();
+    //obm.colorMeshTo2D();
     cursor = center(pmin, pmax);
     geometries = obm.getGeometriesMeshes();
 
@@ -137,6 +138,8 @@ int init( )
     cursor = center(spmin, spmax);
     std::cout << pmin << ", " << pmax << std::endl;
     std::cout << spmin << ", " << spmax << std::endl;
+    logfile << pmin << ", " << std::endl;
+    t = Scale(10, 10, 10);
 
     camera.lookat(pmin, pmax);
 
@@ -155,8 +158,8 @@ int draw( )
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     
     //draw(mesh, Identity(), Identity(), Identity());
-    Transform t = Scale(10, 10, 10);
-    draw(m_sphere,t,  camera);
+    
+    
     
 
     int mx, my;
@@ -174,14 +177,38 @@ int draw( )
             // deplace le point de rotation
         camera.translation((float) mx / (float) window_width(), (float) my / (float) window_height());
 
-    obm.computeShowned(cursor);
+    if (key_state('z'))
+    {
+        t = t * Translation(Vector(0, 1, 0));
+        cursor = t(Point(0, 0, 0));
+        logfile << t(Point(0, 0, 0)) << ", " << std::endl;
+    }
+    if (key_state('d'))
+    {
+        t = t * Translation(Vector(1, 0, 0));
+        cursor = t(Point(0, 0, 0));
+    }
+
+    if (key_state('s'))
+    {
+        t = t * Translation(Vector(0, -1, 0));
+        cursor = t(Point(0, 0, 0));
+    }
+    if (key_state('q'))
+    {
+        t = t * Translation(Vector(-1, 0, 0));
+        cursor = t(Point(0, 0, 0));
+    }
+    if(key_state('z') || key_state('d') || key_state('s') || key_state('q')) obm.computeShowned(cursor);
+    draw(m_sphere,t,  camera);
+    
     //draw(mesh, camera);
     for (unsigned int i = 0; i < obm.getShownedMeshes().size(); ++i)
     {
-        draw(obm.getShownedMeshes()[i], camera);
+        draw(geometries[obm.getShownedMeshes()[i]], camera);
     }
     
-    //draw(mesh2, camera);
+    draw(mesh, camera);
     //draw(mesh3, camera);
     /*static float angle= 0;      // il faudrait declarer angle comme variable globale...
         if(key_state('j'))
@@ -198,14 +225,16 @@ int draw( )
 int quit( )
 {
     m_sphere.release();
-    /*for (unsigned int i = 0; i < geometries.size(); ++i)
+    mesh.release();
+    for (unsigned int i = 0; i < geometries.size(); ++i)
     {
         geometries[i].release();
-    }*/
-    for (unsigned int i = 0; i < obm.getShownedMeshes().size(); ++i)
+    }
+    /*for (unsigned int i = 0; i < obm.getShownedMeshes().size(); ++i)
     {
         obm.getShownedMeshes()[i].release();
-    }
+    }*/
+    logfile.close();
     return 0;   // ras, pas d'erreur
 }
 
