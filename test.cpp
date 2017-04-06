@@ -20,20 +20,59 @@ Mesh mesh;
 Mesh mesh2;
 Mesh mesh3;
 Mesh plane;
+Mesh m_sphere;
+Point cursor;
 std::vector<Mesh> geometries;
 Orbiter camera;
 GLuint texture;
+objectToMesh obm;
+
+
+
+void init_sphere()
+{
+    const int divBeta = 26;
+    const int divAlpha = divBeta/2;
+    int i,j;
+    float beta, alpha, alpha2;
+
+    m_sphere = Mesh(GL_TRIANGLE_STRIP);
+
+    m_sphere.color( Color(1, 1, 1) );
+
+    for(i=0;i<divAlpha;++i)
+    {
+        alpha = -0.5f*M_PI + float(i)*M_PI/divAlpha;
+        alpha2 = -0.5f*M_PI + float(i+1)*M_PI/divAlpha;
+
+        for(j=0;j<divBeta;++j)
+        {
+            beta = float(j)*2.f*M_PI/(divBeta-1);
+
+            m_sphere.texcoord(beta/(2.0f*M_PI), 0.5f+alpha/M_PI);
+            m_sphere.normal( Vector(cos(alpha)*cos(beta),  sin(alpha), cos(alpha)*sin(beta)) );
+            m_sphere.vertex( Point(cos(alpha)*cos(beta),  sin(alpha), cos(alpha)*sin(beta)) );
+
+
+            m_sphere.texcoord(beta/(2.0f*M_PI), 0.5f+alpha2/M_PI);
+            m_sphere.normal( Vector(cos(alpha2)*cos(beta),  sin(alpha2), cos(alpha2)*sin(beta)) );
+            m_sphere.vertex( Point(cos(alpha2)*cos(beta),  sin(alpha2), cos(alpha2)*sin(beta))   );
+        }
+
+        m_sphere.restart_strip();
+    }
+}
 
 int init( )
 {
-    objectToMesh obm;
+    
     ///home/dyavil/Documents/Master/TER/Part-2-Tunnel-Bridge-V3.gml
     ///home/dyavil/Documents/TER/LYON_1ER_2012/LYON_1ER_OBJET_REMARQUABLE_2012.gml
     ///home/dyavil/Downloads/CityGML_2.0_Test_Dataset_2012-04-23/Part-3-Railway-V2.gml
     ///home/dyavil/Downloads/citygml/examples/2.0/building/Building_LOD4-EPSG25832.gml
 	citygml::ParserParams params;
 	std::shared_ptr<const citygml::CityModel> city = citygml::load("/home/dyavil/Documents/TER/LYON_1ER_2012/LYON_1ER_BATI_2012.gml", params );
-	
+	cursor = Point();
     std::vector<std::string> thl= city->themes();
     std::string theme = "";
 
@@ -41,6 +80,9 @@ int init( )
     {
         theme = thl[i];
     }
+    init_sphere();
+    
+
 
     const citygml::ConstCityObjects obj =  city->getRootCityObjects();
     obm.toMesh(obj, theme);
@@ -50,8 +92,11 @@ int init( )
     Point pmin, pmax;
     mesh.bounds(pmin, pmax);
     obm.center(mesh, pmin, pmax);
+    
     obm.colorMeshTo2D();
+    cursor = center(pmin, pmax);
     geometries = obm.getGeometriesMeshes();
+
     std::cout << geometries.size() <<std::endl;
 
     /*std::shared_ptr<const citygml::CityModel> city2 = citygml::load("/home/dyavil/Documents/TER/LYON_1ER_2012/LYON_1ER_WATER_2012.gml", params );
@@ -86,8 +131,12 @@ int init( )
 
 
     mesh.bounds(pmin, pmax);
-    std::cout << pmin.x << ", " << pmax.x << std::endl;
-    std::cout << pmin.y << ", " << pmax.y << std::endl;
+    obm.centerBase(m_sphere, pmin, pmax);
+    Point spmin, spmax;
+    m_sphere.bounds(spmin, spmax);
+    cursor = center(spmin, spmax);
+    std::cout << pmin << ", " << pmax << std::endl;
+    std::cout << spmin << ", " << spmax << std::endl;
 
     camera.lookat(pmin, pmax);
 
@@ -104,17 +153,20 @@ int init( )
 int draw( )
 {
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    
     //draw(mesh, Identity(), Identity(), Identity());
-    //draw(mesh, camera);
+    Transform t = Scale(10, 10, 10);
+    draw(m_sphere,t,  camera);
     
 
     int mx, my;
     unsigned int mb= SDL_GetRelativeMouseState(&mx, &my);
+    
   
    // deplace la camera
-    if(mb & SDL_BUTTON(1))              // le bouton gauche est enfonce
+    if(mb & SDL_BUTTON(1)) {             // le bouton gauche est enfonce
        // tourne autour de l'objet
-        camera.rotation(mx, my);
+        camera.rotation(mx, my);}
     else if(mb & SDL_BUTTON(3))         // le bouton droit est enfonce
            // approche / eloigne l'objet
         camera.move(mx);
@@ -122,12 +174,13 @@ int draw( )
             // deplace le point de rotation
         camera.translation((float) mx / (float) window_width(), (float) my / (float) window_height());
 
-
+    obm.computeShowned(cursor);
     //draw(mesh, camera);
-    for (unsigned int i = 0; i < geometries.size(); ++i)
+    for (unsigned int i = 0; i < obm.getShownedMeshes().size(); ++i)
     {
-        draw(geometries[i], camera);
+        draw(obm.getShownedMeshes()[i], camera);
     }
+    
     //draw(mesh2, camera);
     //draw(mesh3, camera);
     /*static float angle= 0;      // il faudrait declarer angle comme variable globale...
@@ -144,10 +197,14 @@ int draw( )
 // destruction des objets openGL
 int quit( )
 {
-    //mesh.release();
-    for (unsigned int i = 0; i < geometries.size(); ++i)
+    m_sphere.release();
+    /*for (unsigned int i = 0; i < geometries.size(); ++i)
     {
         geometries[i].release();
+    }*/
+    for (unsigned int i = 0; i < obm.getShownedMeshes().size(); ++i)
+    {
+        obm.getShownedMeshes()[i].release();
     }
     return 0;   // ras, pas d'erreur
 }

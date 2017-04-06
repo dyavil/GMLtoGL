@@ -44,6 +44,17 @@ void objectToMesh::center(Mesh & mesh, Point pmax, Point pmin){
 }
 
 
+void objectToMesh::centerBase(Mesh & mesh, Point pmax, Point pmin){
+    Point newcenter((pmin.x+pmax.x)/2, (pmin.y+pmax.y)/2, (pmin.z+pmax.z)/2);
+    for (int i = 0; i < mesh.vertex_count(); ++i)
+    {
+        vec3 t = mesh.positions()[i];
+        mesh.vertex(i, t.x-newcenter.x, t.y-newcenter.y, t.z-newcenter.z);
+    }
+
+}
+
+
 void objectToMesh::recursiveCall(Mesh & mesh, const citygml::CityObject * obj, float r, float r1, float r2, int deep)
 {
 	static int numb = 0;
@@ -208,7 +219,7 @@ void objectToMesh::recursiveGeometryCall(Mesh & mesh, citygml::Geometry gs, floa
 		    std::cout << tvec1.size() << "  " << tvec1[0][0] << "  " << tvec1[3][0] << std::endl;
 		    mesh.triangle(a, b, c);*/
 		}
-		if(gs.getGeometriesCount() == 0) geometries.push_back(temp);
+		geometries.push_back(temp);
 }
 
 
@@ -233,5 +244,30 @@ void objectToMesh::colorMeshTo2D(){
 	}
 	
 }
+
+
+float objectToMesh::distanceM(Point & a, Mesh & b){
+	Point bpmin, bpmax;
+	b.bounds(bpmin, bpmax);
+	float d1 = distance(a, bpmin);
+	float d2 = distance(a, bpmax);
+	float r1 = std::min(d1, d2);
+	return r1;
+}
+
+void objectToMesh::computeShowned(Point p){
+	const int maxdist = 150;
+	showned.clear();
+	for (int i = 0; i < geometries.size(); ++i)
+	{
+		if (distanceM(p, geometries[i]) < maxdist)
+		{
+			showned.push_back(geometries[i]);
+		}
+	}
+}
+
+
+
 
 
