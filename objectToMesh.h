@@ -35,7 +35,8 @@ public:
 	std::ofstream logfile;
 	std::string theme;
 private:
-	float distanceM(Point & a, Mesh & b);
+	float distanceM(Point & a, Point & bpmin, Point & bpmax);
+	bool inBox(Point & a, Point & bpmin, Point & bpmax);
 
 	Mesh mesh;
 	std::vector<Mesh> geometries;

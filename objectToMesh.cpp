@@ -246,23 +246,65 @@ void objectToMesh::colorMeshTo2D(){
 }
 
 
-float objectToMesh::distanceM(Point & a, Mesh & b){
-	Point bpmin, bpmax;
-	b.bounds(bpmin, bpmax);
+float objectToMesh::distanceM(Point & a, Point & bpmin, Point & bpmax){
+	
 	Point p = center(bpmin, bpmax);
-	/*float d1 = distance(a, bpmin);
+	float d1 = distance(a, bpmin);
 	float d2 = distance(a, bpmax);
-	float r1 = std::min(d1, d2);*/
-	float r = distance(a, p);
-	return r;
+	//float d3 = distance(a, p);
+	float d4 = distance(a, Point(bpmax.x, bpmin.y, p.z));
+	float d5 = distance(a, Point(bpmin.x, bpmax.y, p.z));
+	/*float ra = (d1 + d2 + d3 + d4 + d5)/5;
+	float r2 = distance(bpmin, bpmax);
+	if(r < r2) return 160.0;
+	else return 200.0;*/
+	float r1 = std::min(d1, d2);
+	//float r2 = std::min(r1, d3);
+	float r3 = std::min(r1, d4);
+	float rb = std::min(r3, d5);
+	//float r = std::min(ra, rb);
+	float distTop = 2000.0;
+	float distBottom = 2000.0;
+	if (a.x <= bpmax.x && a.x >= bpmin.x)
+	{
+		//arrte top et bottom
+		distTop = distance(a, Point(a.x, bpmax.y, a.z));
+		distBottom = distance(a, Point(a.x, bpmin.y, a.z));
+	}
+	float distLeft = 2000.0;
+	float distRight = 2000.0;
+	if (a.y <= bpmax.y && a.y >= bpmin.y)
+	{
+		//arrte left et right
+		distLeft = distance(a, Point(bpmin.x, a.y, a.z));
+		distRight = distance(a, Point(bpmax.x, a.y, a.z));
+	}
+	float tt1 = std::min(distRight, distLeft);
+	float tt2 = std::min(tt1, distTop);
+	float tt3 = std::min(tt2, distBottom);
+	float tt4 = std::min(tt3, rb);
+	//std::cout << distTop << ", " << distBottom << ", " << distRight << ", " << std::endl;
+	return tt4;
+}
+
+
+bool objectToMesh::inBox(Point & a, Point & bpmin, Point & bpmax){
+	if (a.x <= bpmax.x && a.x >= bpmin.x){
+		if (a.y <= bpmax.y && a.y >= bpmin.y){
+			return true;
+		}
+	}
+	return false;
 }
 
 void objectToMesh::computeShowned(Point p){
-	const int maxdist = 180;
+	const int maxdist = 100;
 	showned.clear();
 	for (int i = 0; i < geometries.size(); ++i)
 	{
-		if (distanceM(p, geometries[i]) < maxdist)
+		Point bpmin, bpmax;
+		geometries[i].bounds(bpmin, bpmax);
+		if ((distanceM(p, bpmin, bpmax) < maxdist) || inBox(p, bpmin, bpmax))
 		{
 			showned.push_back(i);
 		}
