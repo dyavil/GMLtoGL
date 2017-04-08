@@ -1,6 +1,6 @@
 #include "objectToMesh.h"
 
-Mesh & objectToMesh::toMesh(const citygml::ConstCityObjects & obj, std::string them){
+void objectToMesh::toMesh(Mesh & mesh, const citygml::ConstCityObjects & obj, std::string them, std::vector<Mesh> & geometries){
 	mesh = Mesh(GL_TRIANGLES);
 	//mesh.color(Color(0.62, 0.60, 0.91));
 	//mesh.color(Color(1, 0, 1));
@@ -11,7 +11,7 @@ Mesh & objectToMesh::toMesh(const citygml::ConstCityObjects & obj, std::string t
 	float r2 = ((float) rand() / (RAND_MAX));
 	for (unsigned int i = 0; i < obj.size(); ++i)
 	{
-		recursiveCall(mesh, obj[i], r, r1, r2, 0);
+		recursiveCall(mesh, obj[i], geometries, r, r1, r2, 0);
 	}
 	logfile.close();
 	
@@ -23,10 +23,9 @@ Mesh & objectToMesh::toMesh(const citygml::ConstCityObjects & obj, std::string t
         vec3 t = mesh.positions()[i];
         mesh.vertex(i, t.x-newcenter.x, t.y-newcenter.y, t.z-newcenter.z);
     }*/
-	return mesh;
 }
 
-void objectToMesh::centerM(Mesh & mesh, Point pmax, Point pmin){
+void objectToMesh::centerM(Mesh & mesh, std::vector<Mesh> & geometries, Point pmax, Point pmin){
     Point newcenter((pmin.x+pmax.x)/2, (pmin.y+pmax.y)/2, (pmin.z+pmax.z)/2);
     for (int i = 0; i < mesh.vertex_count(); ++i)
     {
@@ -55,7 +54,7 @@ void objectToMesh::centerBase(Mesh & mesh, Point pmax, Point pmin){
 }
 
 
-void objectToMesh::recursiveCall(Mesh & mesh, const citygml::CityObject * obj, float r, float r1, float r2, int deep)
+void objectToMesh::recursiveCall(Mesh & mesh, const citygml::CityObject * obj, std::vector<Mesh> & geometries, float r, float r1, float r2, int deep)
 {
 	static int numb = 0;
 	static int count = 0;
@@ -70,7 +69,7 @@ void objectToMesh::recursiveCall(Mesh & mesh, const citygml::CityObject * obj, f
 	for (unsigned int i = 0; i < obj->getChildCityObjectsCount(); ++i)
 	{
 		const citygml::CityObject *objc = &obj->getChildCityObject(i);
-		recursiveCall(mesh, objc, r, r1, r2, deep+1);
+		recursiveCall(mesh, objc, geometries, r, r1, r2, deep+1);
 	}
 	numb += obj->getChildCityObjectsCount();
 	logfile << "Objet " << count << " est composé de " << obj->getGeometriesCount() << " geometries.\n";
@@ -79,7 +78,7 @@ void objectToMesh::recursiveCall(Mesh & mesh, const citygml::CityObject * obj, f
 	{
 		
 		citygml::Geometry gs = obj->getGeometry(i);
-		recursiveGeometryCall(mesh, gs, r, r1, r2);
+		recursiveGeometryCall(mesh, gs, geometries, r, r1, r2);
 	}
 	for (unsigned int i = 0; i < obj->getImplicitGeometryCount(); ++i)
 	{
@@ -92,7 +91,7 @@ void objectToMesh::recursiveCall(Mesh & mesh, const citygml::CityObject * obj, f
 }
 
 
-void objectToMesh::recursiveGeometryCall(Mesh & mesh, citygml::Geometry gs, float r, float r1, float r2)
+void objectToMesh::recursiveGeometryCall(Mesh & mesh, citygml::Geometry gs, std::vector<Mesh> & geometries, float r, float r1, float r2)
 {
 	static int count = 0;
 	count++;
@@ -104,7 +103,7 @@ void objectToMesh::recursiveGeometryCall(Mesh & mesh, citygml::Geometry gs, floa
 	{
 
 		citygml::Geometry gsc = gs.getGeometry(i);
-		recursiveGeometryCall(mesh, gsc, r, r1, r2);
+		recursiveGeometryCall(mesh, gsc, geometries, r, r1, r2);
 	}
 	logfile << "Geometry " << count << " est composée de " << gs.getPolygonsCount() << " polygon.\n";
 	std::string s = "";
@@ -199,119 +198,10 @@ void objectToMesh::recursiveGeometryCall(Mesh & mesh, citygml::Geometry gs, floa
 			    
 			   
 			}
-			/*std::shared_ptr<const citygml::Texture>  mat = pl->getTextureFor(theme);
-			std::string temp = "/home/dyavil/Documents/TER/LYON_1ER_2012/" + mat->getUrl();
-			if (mat != nullptr && temp != s)
-			{
-				s = "/home/dyavil/Documents/TER/LYON_1ER_2012/" + mat->getUrl();
-				//std::cout << s << std::endl;
-				//GLuint texture= read_texture(0, s.c_str());
-			}*/
 
 			logfile << "xdiff : " << max-min << ", ydiff : " << ymax-ymin << ", zdiff : " << zmax-zmin << "\n";
-			//std::cout << nbpoly << std::endl;
-		    /*TVec3d vec1 = tvec1[0];
-		    unsigned int a = mesh.vertex(vec1[0], vec1[1], vec1[2]);
-		    vec1 = tvec1[1];
-		    unsigned int b = mesh.vertex(vec1[0], vec1[1], vec1[2]);
-		    vec1 = tvec1[2];
-		    unsigned int c = mesh.vertex(vec1[0], vec1[1], vec1[2]);
-		    std::cout << tvec1.size() << "  " << tvec1[0][0] << "  " << tvec1[3][0] << std::endl;
-		    mesh.triangle(a, b, c);*/
+
 		}
 		geometries.push_back(temp);
 }
-
-
-void objectToMesh::meshTo2D(){
-	for (int i = 0; i < mesh.index_count(); ++i)
-	{
-		int pos = mesh.indices()[i];
-		vec3 temp = mesh.positions()[pos];	
-		mesh.vertex(mesh.indices()[i], temp.x, temp.y, 150.0);	
-	}
-}
-
-void objectToMesh::colorMeshTo2D(){
-	for (unsigned int j = 0; j < geometries.size(); ++j)
-	{
-		for (int i = 0; i < geometries[j].index_count(); ++i)
-		{
-			int pos = geometries[j].indices()[i];
-			vec3 temp = geometries[j].positions()[pos];	
-			geometries[j].vertex(geometries[j].indices()[i], temp.x, temp.y, 0.0);	
-		}
-	}
-	
-}
-
-
-float objectToMesh::distanceM(Point & a, Point & bpmin, Point & bpmax){
-	
-	Point p = center(bpmin, bpmax);
-	float d1 = distance(a, bpmin);
-	float d2 = distance(a, bpmax);
-	//float d3 = distance(a, p);
-	float d4 = distance(a, Point(bpmax.x, bpmin.y, p.z));
-	float d5 = distance(a, Point(bpmin.x, bpmax.y, p.z));
-	/*float ra = (d1 + d2 + d3 + d4 + d5)/5;
-	float r2 = distance(bpmin, bpmax);
-	if(r < r2) return 160.0;
-	else return 200.0;*/
-	float r1 = std::min(d1, d2);
-	//float r2 = std::min(r1, d3);
-	float r3 = std::min(r1, d4);
-	float rb = std::min(r3, d5);
-	//float r = std::min(ra, rb);
-	float distTop = 2000.0;
-	float distBottom = 2000.0;
-	if (a.x <= bpmax.x && a.x >= bpmin.x)
-	{
-		//arrte top et bottom
-		distTop = distance(a, Point(a.x, bpmax.y, a.z));
-		distBottom = distance(a, Point(a.x, bpmin.y, a.z));
-	}
-	float distLeft = 2000.0;
-	float distRight = 2000.0;
-	if (a.y <= bpmax.y && a.y >= bpmin.y)
-	{
-		//arrte left et right
-		distLeft = distance(a, Point(bpmin.x, a.y, a.z));
-		distRight = distance(a, Point(bpmax.x, a.y, a.z));
-	}
-	float tt1 = std::min(distRight, distLeft);
-	float tt2 = std::min(tt1, distTop);
-	float tt3 = std::min(tt2, distBottom);
-	float tt4 = std::min(tt3, rb);
-	//std::cout << distTop << ", " << distBottom << ", " << distRight << ", " << std::endl;
-	return tt4;
-}
-
-
-bool objectToMesh::inBox(Point & a, Point & bpmin, Point & bpmax){
-	if (a.x <= bpmax.x && a.x >= bpmin.x){
-		if (a.y <= bpmax.y && a.y >= bpmin.y){
-			return true;
-		}
-	}
-	return false;
-}
-
-void objectToMesh::computeShowned(Point p){
-	const int maxdist = 100;
-	showned.clear();
-	for (int i = 0; i < geometries.size(); ++i)
-	{
-		Point bpmin, bpmax;
-		geometries[i].bounds(bpmin, bpmax);
-		if ((distanceM(p, bpmin, bpmax) < maxdist) || inBox(p, bpmin, bpmax))
-		{
-			showned.push_back(i);
-		}
-	}
-}
-
-
-
-
 

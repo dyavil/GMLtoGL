@@ -18,27 +18,16 @@ class objectToMesh{
 public:
 	objectToMesh(){};
 	~objectToMesh(){};
-	Mesh & toMesh(const citygml::ConstCityObjects & obj, std::string theme);
-	void centerM(Mesh & mesh, Point pmin, Point pmax);
+	void toMesh(Mesh & mesh, const citygml::ConstCityObjects & obj, std::string theme, std::vector<Mesh> & geometries);
+	void centerM(Mesh & mesh, std::vector<Mesh> & geometries, Point pmin, Point pmax);
 	void centerBase(Mesh & mesh, Point pmin, Point pmax);
-	void recursiveCall(Mesh &mesh, const citygml::CityObject * obj, float r, float r1, float r2, int deep);
-	void recursiveGeometryCall(Mesh & mesh, citygml::Geometry gs, float r, float r1, float r2);
-	void meshTo2D();
-	void colorMeshTo2D();
-	Mesh & getMesh(){return mesh;};
-	std::vector<Mesh> & getGeometriesMeshes(){return geometries;};
-	std::vector<int> & getShownedMeshes(){return showned;};
-	std::vector<Mesh> & splitGeometry(Mesh mesh);
-	void computeShowned(Point p);
+	void recursiveCall(Mesh &mesh, const citygml::CityObject * obj, std::vector<Mesh> & geometries, float r, float r1, float r2, int deep);
+	void recursiveGeometryCall(Mesh & mesh, citygml::Geometry gs, std::vector<Mesh> & geometries, float r, float r1, float r2);
+
 
 
 	std::ofstream logfile;
 	std::string theme;
-private:
-	float distanceM(Point & a, Point & bpmin, Point & bpmax);
-	bool inBox(Point & a, Point & bpmin, Point & bpmax);
 
-	Mesh mesh;
-	std::vector<Mesh> geometries;
-	std::vector<int> showned;
+
 };
