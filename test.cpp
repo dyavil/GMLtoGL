@@ -23,6 +23,8 @@ simulation simu;
 int init( )
 {
     simu.init("/home/dyavil/Documents/TER/LYON_1ER_2012/LYON_1ER_BATI_2012.gml");
+    simu.addFile("/home/dyavil/Documents/TER/LYON_1ER_2012/LYON_1ER_BATI_REMARQUABLE_2012.gml");
+    simu.addFile("/home/dyavil/Documents/TER/LYON_1ER_2012/LYON_1ER_WATER_2012.gml");
     ///home/dyavil/Documents/Master/TER/Part-2-Tunnel-Bridge-V3.gml
     ///home/dyavil/Documents/TER/LYON_1ER_2012/LYON_1ER_OBJET_REMARQUABLE_2012.gml
     ///home/dyavil/Downloads/CityGML_2.0_Test_Dataset_2012-04-23/Part-3-Railway-V2.gml

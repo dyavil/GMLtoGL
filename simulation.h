@@ -12,14 +12,14 @@ public:
 	
 	~simulation(){};
 	void init(std::string f);
-	void addFile(std::string f){gmlfiles.push_back(std::move(f));};
-	Mesh & getMesh(){return global;};
+	void addFile(std::string f);
+	//Mesh & getMesh(){return global;};
 	Orbiter & getCamera(){return camera;};
 	std::vector<Mesh> & getGeometriesMeshes(){return geometries;};
 	int getGeometriesSize(){return geometries.size();};
 	Mesh & getGeometry(int i){return geometries[i];};
 	//void centerElem(Mesh & mesh);
-	void meshTo2D();
+	void meshTo2D(int id);
 	void geometriesTo2D();
 	void run(int action, int mx, int my);
 	
@@ -34,9 +34,11 @@ private:
 
 	objectToMesh obm;
 	Orbiter camera;
-	Mesh global;
+	std::vector<Mesh> globals;
 	Mesh user;
 	Point cursor;
+	Point globalmin;
+	Point globalmax;
 	float ground;
 	Transform userMovement;
 	std::vector<Mesh> geometries;

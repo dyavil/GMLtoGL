@@ -2,6 +2,7 @@
 
 void simulation::init(std::string f){
 	gmlfiles.push_back(f);
+	globals.push_back(Mesh());
 	citygml::ParserParams params;
 	std::cout << "\nLoading and parsing file...\n" <<std::endl;
 	std::shared_ptr<const citygml::CityModel> city = citygml::load(f, params );
@@ -16,20 +17,24 @@ void simulation::init(std::string f){
     
     std::cout << "Generating meshes...\n" << std::endl;
     const citygml::ConstCityObjects obj =  city->getRootCityObjects();
-    obm.toMesh(global, obj, theme, geometries);
+    obm.toMesh(globals[0], obj, theme, geometries);
 
     Point pmin, pmax;
-    global.bounds(pmin, pmax);
-    obm.centerM(global, geometries, pmin, pmax);
-    global.bounds(pmin, pmax);
+    globals[0].bounds(pmin, pmax);
+    globalmin = pmin;
+    globalmax = pmax;
+    obm.centerM(globals[0], geometries, pmin, pmax);
+    globals[0].bounds(pmin, pmax);
+    
     for (unsigned int i = 0; i < geometries.size(); ++i)
     {
     	Point tpmin, tpmax;
     	geometries[i].bounds(tpmin, tpmax);
+
     	boxes.push_back(std::make_pair(tpmin, tpmax));
     }
     camera.lookat(pmin, pmax);
-    meshTo2D();
+    meshTo2D(0);
     init_user();
     Point spmin, spmax;
 	user.bounds(spmin, spmax);
@@ -39,6 +44,36 @@ void simulation::init(std::string f){
 	userMovement = Identity();
 	userMovement = userMovement*Translation(Vector(0, 0, ground));
 	std::cout << "Init ended\n" << std::endl;
+}
+
+void simulation::addFile(std::string f){
+	gmlfiles.push_back(f);
+	citygml::ParserParams params;
+	std::cout << "\nAdding file\nLoading and parsing file...\n" <<std::endl;
+	std::shared_ptr<const citygml::CityModel> city = citygml::load(f, params );
+
+    std::vector<std::string> thl= city->themes();
+    std::string theme = "";
+    unsigned int prev = geometries.size();
+
+    for (unsigned int i = 0; i < thl.size(); ++i)
+    {
+        theme = thl[i];
+    }
+    
+    std::cout << "Generating meshes...\n" << std::endl;
+    globals.push_back(Mesh());
+    const citygml::ConstCityObjects obj =  city->getRootCityObjects();
+    obm.toMesh(globals[globals.size()-1], obj, theme, geometries);
+    obm.centerBase(globals[globals.size()-1], globalmin, globalmax);
+    meshTo2D(globals.size()-1);
+    for (unsigned int i = prev; i < geometries.size(); ++i)
+    {
+    	obm.centerBase(geometries[i], globalmin, globalmax);
+    	Point tpmin, tpmax;
+    	geometries[i].bounds(tpmin, tpmax);
+    	boxes.push_back(std::make_pair(tpmin, tpmax));
+    }
 }
 
 
@@ -82,12 +117,12 @@ float simulation::distanceM(Point & a, Point & bpmin, Point & bpmax){
 
 
 
-void simulation::meshTo2D(){
-	for (int i = 0; i < global.index_count(); ++i)
+void simulation::meshTo2D(int id){
+	for (int i = 0; i < globals[id].index_count(); ++i)
 	{
-		int pos = global.indices()[i];
-		vec3 temp = global.positions()[pos];	
-		global.vertex(global.indices()[i], temp.x, temp.y, 150.0);	
+		int pos = globals[id].indices()[i];
+		vec3 temp = globals[id].positions()[pos];	
+		globals[id].vertex(globals[id].indices()[i], temp.x, temp.y, 150.0);	
 	}
 }
 
@@ -177,7 +212,11 @@ void simulation::run(int action, int mx, int my){
         draw(geometries[showned[i]], Translation(Vector(0, 0, 220)), camera);
     }
     
-    draw(global, camera);
+    for (unsigned int i = 0; i < globals.size(); ++i)
+    {
+    	draw(globals[i], camera);
+    }
+    
 }
 
 void simulation::init_user()
@@ -216,7 +255,7 @@ void simulation::init_user()
 
 void simulation::quit(){
 	user.release();
-    global.release();
+    globals[0].release();
     for (unsigned int i = 0; i < geometries.size(); ++i)
     {
         geometries[i].release();
