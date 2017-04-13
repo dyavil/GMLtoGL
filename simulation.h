@@ -1,4 +1,5 @@
 #include "objectToMesh.h"
+#include "simulationData.h"
 #include <utility>
 #include "orbiter.h"
 #include "draw.h"
@@ -35,6 +36,9 @@ private:
 	objectToMesh obm;
 	Orbiter camera;
 	std::vector<Mesh> globals;
+
+	std::vector<Mesh> walls;
+
 	Mesh user;
 	Point cursor;
 	Point globalmin;

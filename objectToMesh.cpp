@@ -9,9 +9,24 @@ void objectToMesh::toMesh(Mesh & mesh, const citygml::ConstCityObjects & obj, st
   	float r = ((float) rand() / (RAND_MAX));
 	float r1 = ((float) rand() / (RAND_MAX));
 	float r2 = ((float) rand() / (RAND_MAX));
+
 	for (unsigned int i = 0; i < obj.size(); ++i)
 	{
-		recursiveCall(mesh, obj[i], geometries, r, r1, r2, 0);
+		std::vector<Mesh> ingeo;
+		recursiveCall(mesh, obj[i], ingeo, r, r1, r2, 0);
+
+		Mesh geo;
+		geo = Mesh(GL_TRIANGLES);
+		geo.color(Color(r, r1, r2));
+		for (unsigned int i = 0; i < ingeo.size(); ++i)
+		{
+			fuseMeshes(geo, ingeo[i]);
+		}
+		if(geo.triangle_count() > 0) geometries.push_back(geo);
+		r = ((float) rand() / (RAND_MAX));
+		r1 = ((float) rand() / (RAND_MAX));
+		r2 = ((float) rand() / (RAND_MAX));
+		//std::cout << "geo " << i << std::endl;
 	}
 	logfile.close();
 	
@@ -60,6 +75,7 @@ void objectToMesh::recursiveCall(Mesh & mesh, const citygml::CityObject * obj, s
 	static int count = 0;
 	count++;
 	logfile << "Objet " << count << " a " << obj->getChildCityObjectsCount() << " enfants.\n";
+	
 	if (deep == 0)
 	{
 		r = ((float) rand() / (RAND_MAX));
@@ -80,6 +96,7 @@ void objectToMesh::recursiveCall(Mesh & mesh, const citygml::CityObject * obj, s
 		citygml::Geometry gs = obj->getGeometry(i);
 		recursiveGeometryCall(mesh, gs, geometries, r, r1, r2);
 	}
+	
 	for (unsigned int i = 0; i < obj->getImplicitGeometryCount(); ++i)
 	{
 		citygml::ImplicitGeometry igs = obj->getImplicitGeometry(i);
@@ -205,3 +222,15 @@ void objectToMesh::recursiveGeometryCall(Mesh & mesh, citygml::Geometry gs, std:
 		geometries.push_back(temp);
 }
 
+
+void objectToMesh::fuseMeshes(Mesh & out, Mesh in){
+	for (int i = 0; i < in.positions().size(); ++i)
+	{
+		int a = out.vertex(in.positions()[i]);
+		i++;
+		int b = out.vertex(in.positions()[i]);
+		i++;
+		int c = out.vertex(in.positions()[i]);
+		out.triangle(a, b, c);
+	}
+}

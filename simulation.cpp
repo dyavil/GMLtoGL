@@ -26,6 +26,13 @@ void simulation::init(std::string f){
     obm.centerM(globals[0], geometries, pmin, pmax);
     globals[0].bounds(pmin, pmax);
     
+    simulationData dat;
+    
+
+    
+    
+    std::cout << "splitting geometries...\n" << geometries.size() << std::endl;
+    geometries = dat.splitMeshes(geometries);
     for (unsigned int i = 0; i < geometries.size(); ++i)
     {
     	Point tpmin, tpmax;
@@ -33,6 +40,21 @@ void simulation::init(std::string f){
 
     	boxes.push_back(std::make_pair(tpmin, tpmax));
     }
+    std::cout << "splitting ended..."<< geometries.size() <<"\n\nExtracting planes...\n" << std::endl;
+
+    for (unsigned int i = 0; i < geometries.size(); ++i)
+    {
+    	dat.extractPlanes(geometries[i]);
+    	//if (m.triangle_count() > 0) walls.push_back(m);
+    }
+    walls = dat.getPosPlanesMeshes();
+    std::vector<Mesh> walltemp = dat.getMinPlanesMeshes();
+    for (unsigned int i = 0; i < walltemp.size(); ++i)
+    {
+    	walls.push_back(walltemp[i]);
+    }
+    std::cout << "Done\n" << std::endl;
+
     camera.lookat(pmin, pmax);
     meshTo2D(0);
     init_user();
@@ -210,6 +232,10 @@ void simulation::run(int action, int mx, int my){
 	for (unsigned int i = 0; i < showned.size(); ++i)
     {
         draw(geometries[showned[i]], Translation(Vector(0, 0, 220)), camera);
+    }
+    for (unsigned int i = 0; i < walls.size(); ++i)
+    {
+        draw(walls[i],Translation(Vector(0, 0, 220)), camera);
     }
     
     for (unsigned int i = 0; i < globals.size(); ++i)

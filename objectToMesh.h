@@ -24,7 +24,7 @@ public:
 	void recursiveCall(Mesh &mesh, const citygml::CityObject * obj, std::vector<Mesh> & geometries, float r, float r1, float r2, int deep);
 	void recursiveGeometryCall(Mesh & mesh, citygml::Geometry gs, std::vector<Mesh> & geometries, float r, float r1, float r2);
 
-
+	void fuseMeshes(Mesh & out, Mesh in);
 
 	std::ofstream logfile;
 	std::string theme;
